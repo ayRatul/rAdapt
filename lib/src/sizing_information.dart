@@ -3,18 +3,14 @@ import 'package:flutter/material.dart';
 /// Contains sizing information to make responsive choices for the current screen
 class SizingInformation {
   final RDevice deviceScreenType;
-  final Size screenSize;
-  final Size localWidgetSize;
 
   SizingInformation({
     this.deviceScreenType,
-    this.screenSize,
-    this.localWidgetSize,
   });
 
   @override
   String toString() {
-    return 'DeviceType:$deviceScreenType ScreenSize:$screenSize LocalWidgetSize:$localWidgetSize';
+    return 'DeviceType:$deviceScreenType';
   }
 }
 
