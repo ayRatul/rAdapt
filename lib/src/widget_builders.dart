@@ -4,16 +4,14 @@ import 'package:praktice/responsive.dart';
 import 'helpers.dart';
 import 'sizing_information.dart';
 
-typedef WidgetBuilder = Widget Function(BuildContext);
+typedef SizeWidgetBuilder = Widget Function(
+    BuildContext context, SizingInformation sizeInfo);
 
 /// A widget with a builder that provides you with the sizingInformation
 ///
 /// This widget is used by the ScreenTypeLayout to provide different widget builders
 class ResponsiveBuilder extends StatelessWidget {
-  final Widget Function(
-    BuildContext context,
-    SizingInformation sizingInformation,
-  ) builder;
+  final SizeWidgetBuilder builder;
 
   final CustomBreakpoints breakpoints;
 
@@ -58,40 +56,6 @@ class OrientationLayoutBuilder extends StatelessWidget {
         }
 
         return portrait(context);
-      },
-    );
-  }
-}
-
-/// Provides a builder function for different screen types
-///
-/// Each builder will get built based on the current device width.
-
-class ScreenTypeLayout extends StatelessWidget {
-  final CustomBreakpoints breakpoints;
-  final Map<String, WidgetBuilder> builders;
-  const ScreenTypeLayout.builder({Key key, this.breakpoints, this.builders})
-      : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return ResponsiveBuilder(
-      breakpoints: breakpoints,
-      builder: (context, sizingInformation) {
-        print(sizingInformation.deviceScreenType);
-        if (builders.containsKey(sizingInformation.deviceScreenType)) {
-          return builders[sizingInformation.deviceScreenType](context);
-        } else {
-          for (String currentDevice = sizingInformation.deviceScreenType;
-              currentDevice != null;) {
-            currentDevice =
-                ResponsiveSizingConfig.instance.getSmallerSize(currentDevice);
-            if (builders.containsKey(currentDevice)) {
-              return builders[currentDevice](context);
-            }
-          }
-        }
-        return SizedBox();
       },
     );
   }
