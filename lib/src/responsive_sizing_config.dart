@@ -17,7 +17,7 @@ class ResponsiveSizingConfig {
     _customBreakPoints = customBreakpoints;
   }
 
-  static const CustomBreakpoints _defaultBreakPoints =
+  static CustomBreakpoints _defaultBreakPoints =
       CustomBreakpoints(data: [RDevice(480, 1)]);
 
   CustomBreakpoints get breakpoints =>
