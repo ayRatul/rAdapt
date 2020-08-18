@@ -3,51 +3,40 @@ import 'responsive_sizing_config.dart';
 import 'sizing_information.dart';
 
 /// Returns the [DeviceScreenType] that the application is currently running on
-String getDevice(BuildContext context, {CustomBreakpoints breakpoints}) =>
+RDevice getDevice(BuildContext context, {CustomBreakpoints breakpoints}) =>
     getCustomDeviceType(MediaQuery.of(context).size, breakpoints: breakpoints);
 
-String getCustomDeviceType(Size size, {CustomBreakpoints breakpoints}) {
+RDevice getCustomDeviceType(Size size, {CustomBreakpoints breakpoints}) {
   double deviceWidth = size.shortestSide;
+
+  // Replaces the defaults with the user defined definitions
   if (breakpoints != null) {
-    List<String> _orderedList =
-        ResponsiveSizingConfig.getOrderedList(breakpoints);
-    for (var _t = 0; _t < _orderedList.length; _t++) {
-      String _currentDevice = _orderedList[_t];
-      if (deviceWidth < breakpoints.data[_currentDevice]) {
+    for (var _t = 0; _t < breakpoints.data.length; _t++) {
+      RDevice _currentDevice = breakpoints.data[_t];
+      if (deviceWidth < _currentDevice.breakPointlimit) {
         return _currentDevice;
       }
     }
-    return _orderedList.last;
+    return breakpoints.data.last;
   } else {
     for (var _t = 0;
-        _t < ResponsiveSizingConfig.instance.sizeOrder.length;
+        _t < ResponsiveSizingConfig.instance.breakpoints.data.length;
         _t++) {
-      String _currentDevice = ResponsiveSizingConfig.instance.sizeOrder[_t];
-      if (deviceWidth <
-          ResponsiveSizingConfig.instance.breakpoints.data[_currentDevice]) {
+      RDevice _currentDevice =
+          ResponsiveSizingConfig.instance.breakpoints.data[_t];
+      if (deviceWidth < _currentDevice.breakPointlimit) {
         return _currentDevice;
       }
     }
   }
-  return ResponsiveSizingConfig.instance.sizeOrder.last;
+  return ResponsiveSizingConfig.instance.breakpoints.data.last;
 }
 
 /// Will return one of the values passed in for the device it's running on
-T getValueForScreenType<T>(
-    {BuildContext context, Map<String, dynamic> values}) {
-  String deviceScreenType = getDevice(context);
-  if (values.containsKey(deviceScreenType)) {
-    return values[deviceScreenType];
+double rsize(BuildContext context, double value) {
+  RDevice deviceScreenType = getDevice(context);
+  if (deviceScreenType != null) {
+    return value * deviceScreenType.multiplier;
   }
   return null;
-}
-
-T rsize<T>(BuildContext context, Map<String, dynamic> values) =>
-    getValueForScreenType(context: context, values: values);
-
-class ScreenTypeValueBuilder<T> {
-  @Deprecated('Use better named function getValueForScreenType')
-  T getValueForType({BuildContext context, Map<String, dynamic> values}) {
-    return getValueForScreenType(context: context, values: values);
-  }
 }
