@@ -1,8 +1,10 @@
-import 'package:responsive_builder/responsive_builder.dart';
+import 'sizing_information.dart';
 
 /// Keeps the configuration that will determines the breakpoints for different device sizes
 class ResponsiveSizingConfig {
   static ResponsiveSizingConfig _instance;
+  CustomBreakpoints _customBreakPoints;
+  List<String> _customList;
   static ResponsiveSizingConfig get instance {
     if (_instance == null) {
       _instance = ResponsiveSizingConfig();
@@ -11,47 +13,29 @@ class ResponsiveSizingConfig {
     return _instance;
   }
 
-  static const ScreenBreakpoints _defaultBreakPoints = const ScreenBreakpoints(
-    desktop: 950,
-    tablet: 600,
-    watch: 300,
-  );
-
-  ScreenBreakpoints _customBreakPoints;
-
-  static const RefinedBreakpoints _defaultRefinedBreakPoints =
-      const RefinedBreakpoints(
-    // Desktop
-    desktopExtraLarge: 4096,
-    desktopLarge: 3840,
-    desktopNormal: 1920,
-    desktopSmall: 950,
-    // Tablet
-    tabletExtraLarge: 900,
-    tabletLarge: 850,
-    tabletNormal: 768,
-    tabletSmall: 600,
-    // Mobile
-    mobileExtraLarge: 480,
-    mobileLarge: 414,
-    mobileNormal: 375,
-    mobileSmall: 320,
-  );
-
-  RefinedBreakpoints _customRefinedBreakPoints;
-
-  /// Set the breakPoints which will then be returned through the [breakpoints]
-  void setCustomBreakpoints(ScreenBreakpoints customBreakpoints,
-      {RefinedBreakpoints customRefinedBreakpoints}) {
+  void setCustomBreakpoints(CustomBreakpoints customBreakpoints) {
     _customBreakPoints = customBreakpoints;
-    if (customRefinedBreakpoints != null) {
-      _customRefinedBreakPoints = customRefinedBreakpoints;
-    }
+    _customList = getOrderedList(customBreakpoints);
   }
 
-  ScreenBreakpoints get breakpoints =>
-      _customBreakPoints ?? _defaultBreakPoints;
+  static const CustomBreakpoints _defaultBreakPoints =
+      const CustomBreakpoints(data: {'mobile': 480});
 
-  RefinedBreakpoints get refinedBreakpoints =>
-      _customRefinedBreakPoints ?? _defaultRefinedBreakPoints;
+  static const List<String> _defaultList = null;
+
+  static List<String> getOrderedList(CustomBreakpoints _breakpoints) {
+    return _breakpoints.data.keys.toList(growable: false)
+      ..sort(
+          (k1, k2) => _breakpoints.data[k1].compareTo(_breakpoints.data[k2]));
+  }
+
+  CustomBreakpoints get breakpoints =>
+      _customBreakPoints ?? _defaultBreakPoints;
+  List<String> get sizeOrder => _customList ?? _defaultList;
+  String getSmallerSize(String deviceType) {
+    int index = sizeOrder.indexOf(deviceType);
+    if (index == 0) return null;
+    print('Backlogging to ${sizeOrder[index - 1]}');
+    return sizeOrder[index - 1];
+  }
 }
