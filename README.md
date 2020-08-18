@@ -39,7 +39,7 @@ class RD {
 
 ### Initialization
 
-This needs to be done ONCE in the app, you can do it multiple times if you want but the effects are the same. It is HIGHLY advise to do it in the MaterialApp, or WidgetsApp `builder` function
+This needs to be done ONCE in the app, you can do it multiple times if you want but the effects are the same. It is HIGHLY advised to do it in the MaterialApp, or WidgetsApp `builder` function
 
 ```
 return MaterialApp(
@@ -122,7 +122,7 @@ The usage is easy. Provide a builder function that returns a UI for each of the 
 
 ```dart
 // import the package
-import 'package:responsive_builder/responsive_builder.dart';
+import 'package:rsize/rsize.dart';
 
 // Return a widget function per orientation
 OrientationLayoutBuilder(
@@ -138,11 +138,11 @@ This will return a different coloured container when you swap orientations for y
 This is not available anymore, since the infinite breakpoints make imposible this implementation, however,ResponsiveBuilder does the trick ;)
 
 ### TODO:
-[ ] add more documentation
-[ ] add documentation about the behaviour of the breakpoints
-[ ] find bugs
-[ ] fix bugs
-[ ] maybe publish to pub.dev?
+- [ ] add more documentation
+- [ ] add documentation about the behaviour of the breakpoints
+- [ ] find bugs
+- [ ] fix bugs
+- [ ] maybe publish to pub.dev?
 
 ## Contribution
 
