@@ -1,24 +1,85 @@
-# Responsive Builder 💻➡️🖥➡️📱➡️⌚️
+# RSize 💻➡️🖥➡️📱➡️⌚️
 
-The responsive builder package contains widgets that allows you to create a readable responsive UI. The package is inspired by the [Responsive UI Flutter series](https://www.youtube.com/playlist?list=PLQQBiNtFxeyJbOkeKBe_JG36gm1V2629H) created by FilledStacks.
+This is RSize. I growed up tired of context calls, conditional layouts everywhere, and hardcoded numbers. I wanted something that i had to initialize just once, then forget about it. So i discovered  https://pub.dev/packages/responsive_framework , but it just wasn't good enough, the dropdown and overlays were REALLY bugged.
 
-It aims to provide you with widgets that make it easy to build different UI's along two different Axis. Orientation x ScreenType. This means you can have a separate layout for Mobile - Landscape, Mobile - Portrait, Tablet - Landscape and Tablet-Portrait.
+I then discovered https://github.com/FilledStacks/responsive_builder , wich is the base for this library, i just changed the concept of limited breakpoints and hardcoded values, to Infinite Breakpoints, and one value... multiplied
 
-If you follow along with the series you will have a complete understanding of how it's built and how to use it. [Part 2](https://youtu.be/udsysUj-X4w) goes over how we build the example included in this project.
 
-![Responsive Layout Preview](./responsive_example.gif)
+Of course i still need to define the layout based on the Device in some parts of the application. But that logic is now fully delegated to the developer, not to the library
+
+This library provides the "I" and the "D", as well as a ResponsiveSizingConfig Widget to build the layouts per device
+
+
 
 ## Installation
 
-Add responsive_builder as dependency to your pubspec file.
+Add this repository as a dependency
 
 ```
-responsive_builder:
+rsize: 
+    git: 
+      url: git://github.com/ayRatul/RSize.git
 ```
 
 ## Usage
 
-This package provides a widget called `ResponsiveBuilder` that provides you with a builder function that returns the current `SizingInformation`. The `SizingInformation` includes the `DeviceScreenType`, `screenSize` and `localWidgetSize`. This can be used for fine grained responsive control from a view level down to per widget responsive level.
+This package requires you to implement the device breakpoints. I suggest using a class with static variables and a getter to do the initial setup.
+
+```
+//Somewhere in your main.dart file
+class RD {
+  static RDevice watch = RDevice(300, 0.8); //it's a watch if the size goes from 0 to 300. We multiply the value by 0.8
+  static RDevice mobile = RDevice(600, 1); //it's mobile if the size goes from 300 to 600 We multiply the value by 1
+  static RDevice tablet = RDevice(1000, 1.2); //you get the point We multiply the value by 1.2
+  static RDevice web = RDevice(1300, 2);
+  static CustomBreakpoints get devices =>
+      CustomBreakpoints(data: [watch, mobile, tablet, web]); //after all your breakpoints are defined, this method converts it to a CustomBreakpoints class. Will come in handy later
+}
+```
+
+### Initialization
+
+This needs to be done ONCE in the app, you can do it multiple times if you want but the effects are the same. It is HIGHLY advise to do it in the MaterialApp, or WidgetsApp `builder` function
+
+```
+return MaterialApp(
+      ...
+      builder: (context, child) {
+        ResponsiveSizingConfig.instance.initialize(context, RD.devices); //we initialize with RD.devices ;)
+        return child; //we return the child. Nothing more to do
+      },
+      ...
+    )
+
+```
+
+### Usage
+
+The advised usage is for widgets that are on the build section... You know.. those that you can see changing.
+
+There are three ways of using this.
+The "d", which returns a double value multiplied by the "multiplier"
+
+```
+            child: Container(
+                  width: 48.d, // If the multiplier is 0.5 , this would be 24.0
+                  height: 48.d,// If the multiplier is 0.5 , this would be 24.0
+                  color: Colors.blue,
+                ),
+```
+
+The "i", which returns an integer, the result of (value*multiplier).toInt()
+
+```
+            child: Container(
+                  width: 46.i, // If the multiplier is 0.6 , this would be 28
+                  height: 46.i,// If the multiplier is 0.6 , this would be 28
+                  color: Colors.blue,
+                ),
+```
+
+and finally, `rsize`, both ".i" and ".d" use resize under the hood. So it's kinda useless to call rsize directly. However, i have nice plans for this function
+
 
 ### Responsive Builder
 
@@ -26,21 +87,21 @@ The `ResponsiveBuilder` is used as any other builder widget.
 
 ```dart
 // import the package
-import 'package:responsive_builder/responsive_builder.dart';
+import 'package:rsize/rsize.dart';
 
 // Use the widget
 ResponsiveBuilder(
-    builder: (context, sizingInformation) {
-      // Check the sizing information here and return your UI
-          if (sizingInformation.deviceScreenType == DeviceScreenType.desktop) {
+    builder: (context, device) {
+      // Check the device information here and return your UI
+          if (device == RD.watch) { //We can compare to the class with static variables
           return Container(color:Colors.blue);
         }
 
-        if (sizingInformation.deviceScreenType == DeviceScreenType.tablet) {
+        if (device == RD.mobile) {
           return Container(color:Colors.red);
         }
 
-        if (sizingInformation.deviceScreenType == DeviceScreenType.watch) {
+        if (device == RD.tablet) {
           return Container(color:Colors.yellow);
         }
 
@@ -74,130 +135,14 @@ This will return a different coloured container when you swap orientations for y
 
 ## Screen Type Layout
 
-This widget is similar to the Orientation Layout Builder in that it takes in Widgets that are named and displayed for different screen types.
+This is not available anymore, since the infinite breakpoints make imposible this implementation, however,ResponsiveBuilder does the trick ;)
 
-```dart
-// import the package
-import 'package:responsive_builder/responsive_builder.dart';
-
-// Construct and pass in a widget per screen type
-ScreenTypeLayout(
-  mobile: Container(color:Colors.blue)
-  tablet: Container(color: Colors.yellow),
-  desktop: Container(color: Colors.red),
-  watch: Container(color: Colors.purple),
-);
-```
-
-If you don't want to build all the widgets at once, you can use the widget builder. A widget for the right type of screen will be created only when needed.
-
-```dart
-// Construct and pass in a widget builder per screen type
-ScreenTypeLayout.builder(
-  mobile: (BuildContext context) => Container(color:Colors.blue),
-  tablet: (BuildContext context) => Container(color:Colors.yellow),
-  desktop: (BuildContext context) => Container(color:Colors.red),
-  watch: (BuildContext context) => Container(color:Colors.purple),
-);
-```
-
-## Custom Screen Breakpoints
-
-If you wish to define your own custom break points you can do so by supplying either the `ScreenTypeLayout` or `ResponsiveBuilder` widgets with a `breakpoints` argument.
-
-```dart
-// import the package
-import 'package:responsive_builder/responsive_builder.dart';
-
-//ScreenTypeLayout with custom breakpoints supplied
-ScreenTypeLayout(
-  breakpoints: ScreenBreakpoints(
-    tablet: 600,
-    desktop: 950,
-    watch: 300
-  ),
-  mobile: Container(color:Colors.blue)
-  tablet: Container(color: Colors.yellow),
-  desktop: Container(color: Colors.red),
-  watch: Container(color: Colors.purple),
-);
-```
-
-To get a more in depth run through of this package I would highly recommend [watching this tutorial](https://youtu.be/udsysUj-X4w) where I show you how it was built and how to use it.
-
-## Global Screen Breakpoints
-
-If you want to set the breakpoints for the responsive builders once you can call the line below before the app starts, or wherever you see fit.
-
-```dart
-void main() {
-  ResponsiveSizingConfig.instance.setCustomBreakpoints(
-    ScreenBreakpoints(desktop: 800, tablet: 550, watch: 200),
-  );
-  runApp(MyApp());
-}
-```
-
-This will then reflect the screen types based on what you have set here. You can then still pass in custom break points per `ScreenTypeLayout` if you wish that will override these values for that specific `ScreenTypeLayout` builder.
-
-## Screen Type specific values
-
-Sometimes you don't want to write an entire new UI just to change one value. Say for instance you want your padding on mobile to be 10, on the tablet 30 and desktop 60. Instead of re-writing UI you can use the `getValueForScreenType` function. This is a generic function that will return your value based on the screen type you're on. Take this example below.
-
-```dart
-Container(
-  padding: EdgeInsets.all(10),
-  child: Text('Best Responsive Package'),
-)
-```
-
-What if you ONLY want to update the padding based on the device screen size. You could do.
-
-```dart
-var deviceType = getDeviceType(MediaQuery.of(context).size);
-var paddingValue = 0;
-switch(deviceType) {
-  case DeviceScreenType.desktop:
-    paddingValue = 60;
-    break;
-  case DeviceScreenType.tablet:
-    paddingValue = 30;
-    break;
-  case DeviceScreenType.mobile:
-    paddingValue = 10;
-    break;
-}
-Container(
-  padding: EdgeInsets.all(paddingValue),
-  child: Text('Best Responsive Package'),
-)
-```
-
-Ooooorrrr, you can use shorthand for that.
-
-```dart
-Container(
-  padding: EdgeInsets.all(getValueForScreenType<double>(
-                context: context,
-                mobile: 10,
-                tablet: 30,
-                desktop: 60,
-              )),
-  child: Text('Best Responsive Package'),
-)
-```
-
-It will return the value you give it for the DeviceScreen you're viewing the app on. For instance you want to hide a widget on mobile and not on tablet?
-
-```dart
-getValueForScreenType<bool>(
-    context: context,
-    mobile: false,
-    tablet: true,
-  ) ? MyWidget() : Container()
-```
-
-That will return true on tablet devices and false on mobile.
+### TODO:
+[ ] add more documentation
+[ ] add documentation about the behaviour of the breakpoints
+[ ] find bugs
+[ ] fix bugs
+[ ] maybe publish to pub.dev?
 
 ## Contribution
 
