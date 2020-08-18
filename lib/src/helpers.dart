@@ -33,7 +33,7 @@ RDevice getCustomDeviceType(Size size, {CustomBreakpoints breakpoints}) {
 }
 
 /// Will return one of the values passed in for the device it's running on
-double rsize(BuildContext context, double value) {
+double rsize(BuildContext context, num value) {
   RDevice deviceScreenType = getDevice(context);
   if (deviceScreenType != null) {
     return value * deviceScreenType.multiplier;
