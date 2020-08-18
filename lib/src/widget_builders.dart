@@ -1,11 +1,9 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:praktice/responsive.dart';
 import 'helpers.dart';
 import 'sizing_information.dart';
 
 typedef SizeWidgetBuilder = Widget Function(
-    BuildContext context, SizingInformation sizeInfo);
+    BuildContext context, RDevice sizeInfo);
 
 /// A widget with a builder that provides you with the sizingInformation
 ///
@@ -20,10 +18,7 @@ class ResponsiveBuilder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return builder(
-        context,
-        SizingInformation(
-            deviceScreenType: getDevice(context, breakpoints: breakpoints)));
+    return builder(context, getDevice(context, breakpoints: breakpoints));
   }
 }
 
