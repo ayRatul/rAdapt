@@ -1,7 +1,10 @@
+import 'package:flutter/cupertino.dart';
+import 'helpers.dart';
 import 'sizing_information.dart';
 
 /// Keeps the configuration that will determines the breakpoints for different device sizes
 class ResponsiveSizingConfig {
+  BuildContext globalContext;
   static ResponsiveSizingConfig _instance;
   CustomBreakpoints _customBreakPoints;
 
@@ -13,7 +16,8 @@ class ResponsiveSizingConfig {
     return _instance;
   }
 
-  void setCustomBreakpoints(CustomBreakpoints customBreakpoints) {
+  void initialize(BuildContext context, CustomBreakpoints customBreakpoints) {
+    globalContext = context;
     _customBreakPoints = customBreakpoints;
   }
 
@@ -22,4 +26,10 @@ class ResponsiveSizingConfig {
 
   CustomBreakpoints get breakpoints =>
       _customBreakPoints ?? _defaultBreakPoints;
+}
+
+extension SizeExtension on num {
+  double get d => rsize(ResponsiveSizingConfig.instance.globalContext, this);
+  int get i =>
+      rsize(ResponsiveSizingConfig.instance.globalContext, this).toInt();
 }
