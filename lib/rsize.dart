@@ -1,6 +1,4 @@
-library rsize;
+library radapt;
 
-export 'src/helpers.dart';
-export 'src/sizing_information.dart';
-export 'src/widget_builders.dart';
-export 'src/responsive_sizing_config.dart';
+export 'ResponsiveBuilder/rSize.dart';
+export 'ResponsiveBuilder/rWrapper.dart';
