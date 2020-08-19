@@ -1,4 +1,4 @@
-name: rsize
+name: rAdapt
 description: Scalable numbers based on the device screen size.
 version: 0.0.1
 homepage: https://github.com/ayRatul/rsize
