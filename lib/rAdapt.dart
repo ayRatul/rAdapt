@@ -1,4 +1,4 @@
 library radapt;
 
-export 'ResponsiveBuilder/rSize.dart';
-export 'ResponsiveBuilder/rWrapper.dart';
+export 'src/rSize.dart';
+export 'src/rWrapper.dart';
