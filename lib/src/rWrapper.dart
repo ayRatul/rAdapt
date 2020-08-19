@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../responsive.dart';
+import 'rSize.dart';
 
 ///We use this as a theme class. It just needs to override colors
 abstract class RTheme {
