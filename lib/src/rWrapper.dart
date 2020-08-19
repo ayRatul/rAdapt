@@ -122,39 +122,9 @@ class RController {
     return RController.of(_context).theme.colors[p];
   }
 }
-
-extension RSmartSize on num {
-  double get d => rsize(_context, this);
-  int get i => rsize(_context, this).toInt();
-}
-
 //We could use a similar extension on enum, but that would require to declare the enum in the library... that would lead to
 //a limited number of colors and names. So we let the user define the enum, and the extension themselfs.
 //Then, we just use the logic to get the color.
 //Pros of this : the compiler knows the colors, it's beautiful and simple code. No boilerplate
 //Cons of this : The user needs to import both the library, and the Colors file.
 //It's still better thatn calling MyThemeData.of(context).backgroundColor, instead just call R.backgroundColor.c
-
-class AppBuilder extends StatefulWidget {
-  final Function(BuildContext) builder;
-
-  const AppBuilder({Key key, this.builder}) : super(key: key);
-
-  @override
-  AppBuilderState createState() => new AppBuilderState();
-
-  static AppBuilderState of(BuildContext context) {
-    return context.ancestorStateOfType(const TypeMatcher<AppBuilderState>());
-  }
-}
-
-class AppBuilderState extends State<AppBuilder> {
-  @override
-  Widget build(BuildContext context) {
-    return widget.builder(context);
-  }
-
-  void rebuild() {
-    setState(() {});
-  }
-}
