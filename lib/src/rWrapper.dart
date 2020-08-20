@@ -6,8 +6,6 @@ abstract class RTheme {
   final Map<String, Color> colors = {};
 }
 
-BuildContext _context;
-
 ///[breakpoints] is a [RBreakpoints] object. [colorList] NEEDS to be initialized in a special way, it's optional
 ///[colorList] is an ENUM. Please refer to the documentation to know how to set up the themes.
 ///[themesList] is a list of RThemes, [onLoad] is just called after initState, you should use this to load saved
@@ -64,7 +62,7 @@ class __RWrapperState extends State<RWrapper> {
       key: UniqueKey(),
       child: Builder(
         builder: (BuildContext context) {
-          _context = context;
+          RController._context = context;
           return widget.child;
         },
       ),
@@ -94,6 +92,7 @@ class _RWrapper extends InheritedWidget {
 }
 
 class RController {
+  static BuildContext _context;
   static RBreakpoints get breakpoints => RController.of(_context).breakpoints;
 
   static _RWrapper of(BuildContext context) =>
@@ -114,6 +113,8 @@ class RController {
     }
     RController.of(_context).state.changeBreakpoints(breakpoints);
   }
+
+  static double getMultipliedValue(num n) => rsize(_context, n);
 
   static Color getColorForName(String p) {
     if (!RController.of(_context).theme.colors.containsKey(p)) {
