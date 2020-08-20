@@ -59,7 +59,6 @@ class __RWrapperState extends State<RWrapper> {
   @override
   Widget build(BuildContext context) {
     return _RWrapper(
-      key: UniqueKey(),
       child: Builder(
         builder: (BuildContext context) {
           RController._context = context;
@@ -102,7 +101,7 @@ class RController {
       RBreakpoints(data: [RDevice(480, 1)]);
 
   static void changeTheme(String name) {
-    if (!RController.of(_context).state.widget.themesList.containsKey(name))
+    if (!RController.of(context).state.widget.themesList.containsKey(name))
       return;
     RController.of(_context).state.changeTheme(name);
   }
@@ -114,15 +113,16 @@ class RController {
     RController.of(_context).state.changeBreakpoints(breakpoints);
   }
 
-  static double getMultipliedValue(num n) => rsize(_context, n);
-
   static Color getColorForName(String p) {
     if (!RController.of(_context).theme.colors.containsKey(p)) {
       return RController.of(_context).state.widget.onErrorColor;
     }
     return RController.of(_context).theme.colors[p];
   }
+
+  static double getMultipliedValue(num val) => rsize(RController._context, val);
 }
+
 //We could use a similar extension on enum, but that would require to declare the enum in the library... that would lead to
 //a limited number of colors and names. So we let the user define the enum, and the extension themselfs.
 //Then, we just use the logic to get the color.
