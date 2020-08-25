@@ -95,7 +95,6 @@ class __RWrapperState extends State<RWrapper> {
       assert(!themes.containsKey(_theme.runtimeType.toString()),
           'RConfiguration.themes:The name "${_theme.runtimeType.toString()}" is duplicated');
       themes[_theme.runtimeType.toString()] = _themeBuilder;
-      print(_theme.runtimeType.toString());
     });
     //We load the current Theme
     if (widget.initialThemeType != null) {
