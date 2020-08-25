@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'rWidgets.dart';
+import 'rSize.dart';
 
 //The main controller, this interacts with the UI and the RProvider
 class RController {
@@ -22,7 +22,7 @@ class RController {
     return _w;
   }
 
-  static void changeTheme(String name) => _inst.state.changeTheme(name);
+  static void changeTheme(Type name) => _inst.state.changeTheme(name);
 
   static void changeBreakpoints(List<RDevice> breakpoints) =>
       _inst.state.changeBreakpoints(breakpoints);
@@ -46,4 +46,3 @@ class RController {
     return RController.devices.last;
   }
 }
-
