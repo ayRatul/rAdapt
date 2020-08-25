@@ -21,6 +21,7 @@ class MyHomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     RController.initialize(
         context); //initialize the RController context in the first page of materialapp
+    //We could also initialize in materialApp's builder, however if we do that, to change theme we should call RWrapper.of(context).changeTheme();
     return Scaffold(
         backgroundColor: R.background.c,
         appBar: AppBar(
