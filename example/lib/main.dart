@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'values.dart';
+import 'package:example/values.dart'; //This is a relative import, change "example" with the name of your project
 
 void main() {
   runApp(RWrapper(child: MyApp(), configuration: MyConfiguration()));
