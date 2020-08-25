@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'rSize.dart';
+import 'rWidgets.dart';
 
 //The main controller, this interacts with the UI and the RProvider
 class RController {
