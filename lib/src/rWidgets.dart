@@ -4,14 +4,13 @@ import 'rController.dart';
 typedef RTheme RThemeBuilder();
 
 //These 2 are the classes that the user should use, they allow for a better workflow by overriding the values
-class RTheme {
-  const RTheme({this.name, this.colors, this.inheritsColors});
-  final String name;
+abstract class RTheme {
+  const RTheme({this.colors, this.inheritsColors});
   final Map<String, Color> colors;
   final bool inheritsColors;
 }
 
-class RConfiguration {
+abstract class RConfiguration {
   final List<RDevice> devices = null;
   final List<RThemeBuilder> themes = null;
   final RThemeBuilder defaultTheme = null;
@@ -24,11 +23,11 @@ class RWrapper extends StatefulWidget {
       @required this.child,
       @required this.configuration,
       this.overrideDefaultTheme,
-      this.initialThemeName})
+      this.initialThemeType})
       : super(key: key);
   final Widget child;
   final RConfiguration configuration;
-  final String initialThemeName;
+  final Type initialThemeType;
   final RThemeBuilder overrideDefaultTheme;
   static RProvider of(BuildContext context) {
     assert(
@@ -43,6 +42,7 @@ class RWrapper extends StatefulWidget {
 class __RWrapperState extends State<RWrapper> {
   List<RDevice> breakpoints;
   RTheme currentTheme;
+  RTheme _defaultTheme;
   bool themesEnabled;
   Map<String, RThemeBuilder> themes = {};
   @override
@@ -65,18 +65,18 @@ class __RWrapperState extends State<RWrapper> {
         conf.allowedColors != null ||
         conf.themes != null;
     if (!themesEnabled) return;
-    RTheme _defaultTheme = widget.overrideDefaultTheme != null
+    _defaultTheme = widget.overrideDefaultTheme != null
         ? widget.overrideDefaultTheme()
         : conf.defaultTheme();
     assert(_defaultTheme != null,
         'RConfiguration.defaultTheme or RWrapper.overrideDefaultTheme should not be null');
-    assert(_defaultTheme.colors != null && _defaultTheme.name != null,
+    assert(_defaultTheme.colors != null,
         'RConfiguration.defaultTheme||RWrapper.overrideDefaultTheme: RTheme.colors and RTheme.name are obligatory');
     assert(conf.allowedColors != null,
         'RConfiguration.allowedColors should not be null');
     conf.allowedColors.forEach((element) {
       assert(_defaultTheme.colors.containsKey(element),
-          "RConfiguration.defaultTheme||RWrapper.overrideDefaultTheme: The default RTheme ${_defaultTheme.name} doesn't containt the color :$element , the Default Theme sould have EVERY color specified in RConfiguration.allowedColors");
+          "RConfiguration.defaultTheme||RWrapper.overrideDefaultTheme: The default RTheme ${_defaultTheme.runtimeType.toString()} doesn't containt the color :$element , the Default Theme sould have EVERY color specified in RConfiguration.allowedColors");
     });
 
     //We clear the previous themes (if any), to load conf.themes, convert it to a Map of <String,RThemeBuilder>, for easy access ;)
@@ -84,23 +84,24 @@ class __RWrapperState extends State<RWrapper> {
     assert(conf.themes != null, 'RConfiguration.themes should not be null');
     conf.themes.forEach((_themeBuilder) {
       RTheme _theme = _themeBuilder();
-      assert(_theme.colors != null && _theme.name != null,
+      assert(_theme.colors != null,
           'RTheme in RConfiguration.themes: RTheme.colors and RTheme.name are obligatory, please verify that each theme has those values');
       if (!_theme.inheritsColors) {
         conf.allowedColors.forEach((element) {
           assert(_theme.colors.containsKey(element),
-              "RConfiguration.themes: The RTheme ${_theme.name} doesn't containt the color :$element , since RTheme.inheritsColors is false on that Theme, it should have EVERY color specified in RConfiguration.allowedColors ");
+              "RConfiguration.themes: The RTheme ${_theme.runtimeType.toString()} doesn't containt the color :$element , since RTheme.inheritsColors is false on that Theme, it should have EVERY color specified in RConfiguration.allowedColors ");
         });
       }
-      assert(!themes.containsKey(_theme.name),
-          'RConfiguration.themes:The name "${_theme.name}" is duplicated');
-      themes[_theme.name] = _themeBuilder;
+      assert(!themes.containsKey(_theme.runtimeType.toString()),
+          'RConfiguration.themes:The name "${_theme.runtimeType.toString()}" is duplicated');
+      themes[_theme.runtimeType.toString()] = _themeBuilder;
+      print(_theme.runtimeType.toString());
     });
     //We load the current Theme
-    if (widget.initialThemeName != null) {
-      assert(themes.containsKey(widget.initialThemeName),
-          'RWrapper:The initialThemeName ${widget.initialThemeName} does not match any of the names specified in RConfiguration.themes');
-      currentTheme = _buildTheme(themes[widget.initialThemeName]);
+    if (widget.initialThemeType != null) {
+      assert(themes.containsKey(widget.initialThemeType),
+          'RWrapper:The initialThemeType ${widget.initialThemeType} does not match any of the names specified in RConfiguration.themes');
+      currentTheme = _buildTheme(themes[widget.initialThemeType]);
     } else {
       currentTheme = _defaultTheme;
     }
@@ -112,20 +113,18 @@ class __RWrapperState extends State<RWrapper> {
       RTheme _defaultTheme = widget.overrideDefaultTheme != null
           ? widget.overrideDefaultTheme()
           : widget.configuration.defaultTheme();
-      return RTheme(
-          name: _theme.name,
-          inheritsColors: _theme.inheritsColors,
-          colors: {..._defaultTheme.colors, ..._theme.colors});
+      Map<String, Color> _t = {..._defaultTheme.colors, ..._theme.colors};
+      _theme.colors.addAll(_t);
     }
     return _theme;
   }
 
-  void changeTheme(String name) {
+  void changeTheme(Type name) {
     assert(themesEnabled,
         "RController.changeTheme was called, even tought you didn't specify the required parameters in RConfiguration || RWrapper");
-    if (!themes.containsKey(name))
-      throw 'RController.changeTheme: The name dark does not match any of the names specified in RConfiguration.themes';
-    RTheme _theme = _buildTheme(themes[name]);
+    assert(themes.containsKey(name.toString()),
+        'RController.changeTheme: The name ${name.toString()} does not match any of the names specified in RConfiguration.themes');
+    RTheme _theme = _buildTheme(themes[name.toString()]);
     setState(() {
       currentTheme = _theme;
     });
