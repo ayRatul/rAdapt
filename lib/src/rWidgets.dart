@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'rWrapper.dart';
+import 'rController.dart';
 
 typedef RTheme RThemeBuilder();
 
