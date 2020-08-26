@@ -1,7 +1,7 @@
 library radapt;
-import 'dart:ui';
 import 'package:flutter/material.dart';
 
+BuildContext _context;
 typedef RTheme RThemeBuilder();
 
 //These 2 are the classes that the user should use, they allow for a better workflow by overriding the values
@@ -39,20 +39,21 @@ class RWrap extends StatefulWidget {
   __RWrapperState createState() => __RWrapperState();
 }
 
-class __RWrapperState extends State<RWrap> with WidgetsBindingObserver {
-  List<RDevice> breakpoints;
-  RDevice currentDevice = RDevice(100, 1);
+class __RWrapperState extends State<RWrap> {
+  List<RDeviceWithLimits> breakpoints;
+  RDeviceWithLimits currentDevice = RDeviceWithLimits(0, 100, 1);
   RTheme currentTheme;
+  double multiplier;
   bool themesEnabled;
   Map<String, RThemeBuilder> themes = {};
   @override
   void initState() {
-    _loadConfiguration();
+    _loadThemes();
     _loadBreakpoints(widget.configuration.devices);
     super.initState();
   }
 
-  void _loadConfiguration() {
+  void _loadThemes() {
     RConfiguration conf = widget.configuration;
     //We load the Themes if needed
     themesEnabled = conf.rootTheme != null ||
@@ -94,6 +95,7 @@ class __RWrapperState extends State<RWrap> with WidgetsBindingObserver {
     if (widget.initialTheme != null) {
       assert(themes.containsKey(widget.initialTheme),
           'RWrapper:The initialTheme ${widget.initialTheme} does not match any of the names specified in RConfiguration.themes');
+
       currentTheme = _buildTheme(themes[widget.initialTheme]);
     } else {
       currentTheme = _defaultTheme;
@@ -124,48 +126,58 @@ class __RWrapperState extends State<RWrap> with WidgetsBindingObserver {
   void _loadBreakpoints(List<RDevice> newBreakpoints) {
     List<RDevice> _breakpoints = newBreakpoints?.toList();
     _breakpoints?.sort((a, b) => a.maxSize.compareTo(b.maxSize));
-    breakpoints = _breakpoints;
+    RDevice previousBreakpoint = _breakpoints[0];
+    List<RDeviceWithLimits> _orderedBreakpoints = [];
+    _breakpoints.forEach((element) {
+      _orderedBreakpoints.add(RDeviceWithLimits(
+          previousBreakpoint.maxSize != element.maxSize
+              ? previousBreakpoint.maxSize
+              : 0,
+          element.maxSize,
+          element.multiplier));
+
+      previousBreakpoint = element;
+    });
+    breakpoints = _orderedBreakpoints;
   }
 
-  void changeBreakpoints(List<RDevice> breakpoints) {
+  void changeBreakpoints(BuildContext context, List<RDevice> breakpoints) {
     _loadBreakpoints(breakpoints);
-    detectDevice();
+    detectDevice(context);
   }
 
-  @override
-  void didChangeMetrics() {
-    detectDevice();
-    super.didChangeMetrics();
-  }
-
-  void detectDevice() {
+  void detectDevice(BuildContext context) {
     if (breakpoints == null) return;
-    double size = window.physicalSize.shortestSide;
+    double size = MediaQuery.of(context).size.shortestSide;
+    if (size > currentDevice.minSize && size < currentDevice.maxSize) return;
+    RDevice _dev = breakpoints.last;
     for (var _t = 0; _t < breakpoints.length; _t++) {
       RDevice _currentDevice = breakpoints[_t];
       if (size < _currentDevice.maxSize) {
-        setState(() {
-          currentDevice = _currentDevice;
-        });
+        _dev = _currentDevice;
+
         break;
       }
     }
+    setState(() {
+      currentDevice = _dev;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    print('AKJSHDASBDSB');
+    changeBreakpoints(context, breakpoints);
+    detectDevice(context);
     return RDeviceAndThemeProvider(
-      child: Builder(
-        builder: (context) {
-          RAdapt._context = context;
-          return widget.child;
-        },
-      ),
-      theme: currentTheme,
-      state: this,
-      device: currentDevice,
-    );
+        child: Builder(
+          builder: (pcontext) {
+            _context = pcontext;
+            return widget.child;
+          },
+        ),
+        theme: currentTheme,
+        state: this,
+        device: currentDevice);
   }
 }
 
@@ -194,6 +206,13 @@ class RDevice {
   final int maxSize;
 }
 
+class RDeviceWithLimits implements RDevice {
+  RDeviceWithLimits(this.minSize, this.maxSize, this.multiplier);
+  final double multiplier;
+  final int maxSize;
+  final int minSize;
+}
+
 /// Provides a builder function for a landscape and portrait widget
 
 class OrientationLayoutBuilder extends StatelessWidget {
@@ -216,7 +235,6 @@ class OrientationLayoutBuilder extends StatelessWidget {
 }
 
 class RAdapt {
-  static BuildContext _context;
   static Color getColorOfContext(BuildContext context, String color) {
     assert(
         RWrap.of(context)
@@ -229,10 +247,15 @@ class RAdapt {
     return RWrap.of(context).theme.colors[color];
   }
 
+  static void initialize(BuildContext context) {
+    RWrap.of(context); //This is just to make the flutter widgets dependant 
+  }
+
   static Color getColor(String color) => getColorOfContext(_context, color);
 
-  static double getNumberOfContext(BuildContext context, num number) =>
-      RWrap.of(context).device.multiplier * number;
+  static double getNumberOfContext(BuildContext context, num number) {
+    return RWrap.of(context).device.multiplier * number;
+  }
 
   static double getNumber(num number) => getNumberOfContext(_context, number);
 
@@ -241,7 +264,7 @@ class RAdapt {
 
   static void changeBreakpoints(
           BuildContext context, List<RDevice> breakpoints) =>
-      RWrap.of(context).state.changeBreakpoints(breakpoints);
+      RWrap.of(context).state.changeBreakpoints(context, breakpoints);
 
   static List<String> valuesToString(List<dynamic> values) {
     return values.map((e) => e.toString()).toList();
