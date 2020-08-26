@@ -2,6 +2,17 @@ import 'package:rAdapt/rAdapt.dart';
 import 'package:flutter/material.dart';
 export 'package:rAdapt/rAdapt.dart';
 
+class MyConfiguration implements RConfiguration {
+  @override
+  get devices => RDevices.dataList;
+  @override
+  get themes => RThemes.dataList;
+  @override
+  get allowedColors => RAdapt.valuesToString(R.values);
+  @override
+  get rootTheme => RThemes.light;
+}
+
 enum R {
   background,
   button,
@@ -9,48 +20,37 @@ enum R {
   //etc,etc
 }
 
+extension RColor on R {
+  String get s => this.toString();
+  Color get c => RAdapt.getColor(this.s);
+}
+
 class RDevices {
   static RDevice watch = RDevice(300, 0.8);
   static RDevice mobile = RDevice(800, 1);
   static RDevice tablet = RDevice(1200, 1.2);
   static RDevice desktop = RDevice(1500, 1.5);
-  static List<RDevice> get toList => [watch, mobile, tablet, desktop];
+  static List<RDevice> get dataList => [watch, mobile, tablet, desktop];
+}
+
+extension RNumber on int {
+  double get d => RAdapt.getNumber(this);
+  int get i => this.d.toInt();
 }
 
 class RThemes {
   static RThemeBuilder light = () => LightTheme();
   static RThemeBuilder dark = () => DarkTheme();
-  static List<RThemeBuilder> get toList => [light, dark];
-}
-
-class MyConfiguration implements RConfiguration {
-  @override
-  final List<RDevice> devices = RDevices.toList;
-  @override
-  final List<RThemeBuilder> themes = RThemes.toList;
-  @override
-  final List<String> allowedColors = R.values.map((e) => e.toString()).toList();
-  @override
-  final RThemeBuilder defaultTheme = RThemes.light;
-}
-
-extension RNumber on int {
-  double get d => RController.getValue(this);
-  int get i => this.d.toInt();
-}
-
-extension RColor on R {
-  String get f => this.toString();
-  Color get c => RController.getColor(this.f);
+  static List<RThemeBuilder> get dataList => [light, dark];
 }
 
 class LightTheme implements RTheme {
   @override
-  final Map<String, Color> colors = {
-    R.background.f: Colors.white,
-    R.button.f: Colors.blue,
-    R.foreground.f: Color(0xFFFF00FF)
-  };
+  Map<String, Color> get colors => {
+        R.background.s: Colors.white,
+        R.button.s: Colors.blue,
+        R.foreground.s: Color(0xFFFF00FF)
+      };
 
   @override
   bool get inheritsColors => true;
@@ -58,11 +58,11 @@ class LightTheme implements RTheme {
 
 class DarkTheme implements RTheme {
   @override
-  final Map<String, Color> colors = {
-    R.background.f: Colors.black,
-    R.button.f: Colors.red,
-    R.foreground.f: Color(0xFF0000FF),
-  };
+  Map<String, Color> get colors => {
+        R.background.s: Colors.black,
+        R.button.s: Colors.red,
+        R.foreground.s: Color(0xFF0000FF),
+      };
 
   @override
   bool get inheritsColors => true;
