@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:example/values.dart'; //This is a relative import, change "example" with the name of your project
 
 void main() {
-  runApp(RWrapper(child: MyApp(), configuration: MyConfiguration()));
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -11,6 +11,12 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
+      builder: (context, child) {
+        return RWrap(
+          child: child,
+          configuration: MyConfiguration(),
+        );
+      },
       home: MyHomePage(),
     );
   }
@@ -19,9 +25,6 @@ class MyApp extends StatelessWidget {
 class MyHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    RController.initialize(
-        context); //initialize the RController context in the first page of materialapp
-    //We could also initialize in materialApp's builder, however if we do that, to change theme we should call RWrapper.of(context).changeTheme();
     return Scaffold(
         backgroundColor: R.background.c,
         appBar: AppBar(
