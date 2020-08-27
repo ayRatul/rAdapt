@@ -252,6 +252,8 @@ class RAdapt {
     return RWrap.of(context).theme.colors[color];
   }
 
+  static void attach(BuildContext context) => _context = context;
+
   static Color getColor(String color) => getColorOfContext(_context, color);
 
   static double getNumberOfContext(BuildContext context, num number) {
