@@ -169,12 +169,9 @@ class __RWrapperState extends State<RWrap> {
     changeBreakpoints(context, breakpoints);
     detectDevice(context);
     return RDeviceAndThemeProvider(
-        child: Builder(
-          builder: (pcontext) {
-            _context = pcontext;
-            return widget.child;
-          },
-        ),
+        child:  widget.child;
+          
+        
         theme: currentTheme,
         state: this,
         device: currentDevice);
@@ -248,7 +245,7 @@ class RAdapt {
   }
 
   static void initialize(BuildContext context) {
-    RWrap.of(context); //This is just to make the flutter widgets dependant 
+    _context=context;// now initialize is required
   }
 
   static Color getColor(String color) => getColorOfContext(_context, color);
