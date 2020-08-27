@@ -266,11 +266,11 @@ As you can see we don't implement foreground in DarkTheme... Why? . Because Dark
 
 Now we need to organize our Themes, we will use a class for that , and introduce a new object **RThemeBuilder** . Why do we use a builder? to avoid having resources wasted in themes that we are not using ;)
 
-class MyThemes {
+	class MyThemes {
 	static RThemeBuilder light = ()=>LightTheme();
 	static RThemeBuilder dark =()=>DarkTheme();
 	static  List\<RThemeBuilder> get  dataList => [light, dark];
-}
+	}
 
 And we have come full circle, in MyConfiguration we just set the values
    
