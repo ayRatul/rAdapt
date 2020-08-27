@@ -1,4 +1,5 @@
 library radapt;
+
 import 'package:flutter/material.dart';
 
 BuildContext _context;
@@ -16,6 +17,12 @@ abstract class RConfiguration {
   final List<RThemeBuilder> themes = null;
   final List<String> allowedColors = null;
   final RThemeBuilder rootTheme = null;
+}
+
+class _CurrentTheme {
+  const _CurrentTheme(this.type, this.colors);
+  final Type type;
+  final Map<String, Color> colors;
 }
 
 class RWrap extends StatefulWidget {
@@ -41,11 +48,9 @@ class RWrap extends StatefulWidget {
 
 class __RWrapperState extends State<RWrap> {
   List<RDeviceWithLimits> breakpoints;
-  RDeviceWithLimits currentDevice = RDeviceWithLimits(0, 100, 1);
-  RTheme currentTheme;
-  double multiplier;
-  bool themesEnabled;
   Map<String, RThemeBuilder> themes = {};
+  RDeviceWithLimits currentDevice = RDeviceWithLimits(0, 100, 1);
+  _CurrentTheme currentTheme;
   @override
   void initState() {
     _loadThemes();
@@ -53,21 +58,22 @@ class __RWrapperState extends State<RWrap> {
     super.initState();
   }
 
+  bool get hasThemes =>
+      widget.configuration.rootTheme != null ||
+      widget.configuration.allowedColors != null ||
+      widget.configuration.themes != null;
+
   void _loadThemes() {
     RConfiguration conf = widget.configuration;
     //We load the Themes if needed
-    themesEnabled = conf.rootTheme != null ||
-        conf.allowedColors != null ||
-        conf.themes != null;
-
-    if (!themesEnabled) return;
+    if (!hasThemes) return;
     assert(conf.rootTheme != null,
         'RConfiguration: RConfiguration.rootTheme should not be null');
     assert(conf.allowedColors != null,
         'RConfiguration: RConfiguration.allowedColors should not be null');
     assert(conf.themes != null,
         'RConfiguration: RConfiguration.themes should not be null');
-    RTheme _defaultTheme = widget.configuration.rootTheme();
+    _CurrentTheme _defaultTheme = _buildTheme(widget.configuration.rootTheme);
     assert(_defaultTheme.colors != null,
         'RConfiguration.rootTheme: RTheme.colors should not be null');
     conf.allowedColors.forEach((element) {
@@ -102,22 +108,22 @@ class __RWrapperState extends State<RWrap> {
     }
   }
 
-  RTheme _buildTheme(RThemeBuilder builder) {
+  _CurrentTheme _buildTheme(RThemeBuilder builder) {
     RTheme _theme = builder();
     if (_theme.inheritsColors) {
       RTheme _defaultTheme = widget.configuration.rootTheme();
       Map<String, Color> _t = {..._defaultTheme.colors, ..._theme.colors};
-      _theme.colors.addAll(_t);
+      return _CurrentTheme(_theme.runtimeType, _t);
     }
-    return _theme;
+    return _CurrentTheme(_theme.runtimeType, _theme.colors);
   }
 
   void changeTheme(Type name) {
-    assert(themesEnabled,
+    assert(hasThemes,
         "RController.changeTheme was called, even tought you didn't specify the required parameters in RConfiguration || RWrapper");
     assert(themes.containsKey(name.toString()),
         'RController.changeTheme: The name ${name.toString()} does not match any of the names specified in RConfiguration.themes');
-    RTheme _theme = _buildTheme(themes[name.toString()]);
+    _CurrentTheme _theme = _buildTheme(themes[name.toString()]);
     setState(() {
       currentTheme = _theme;
     });
@@ -155,7 +161,6 @@ class __RWrapperState extends State<RWrap> {
       RDevice _currentDevice = breakpoints[_t];
       if (size < _currentDevice.maxSize) {
         _dev = _currentDevice;
-
         break;
       }
     }
@@ -166,12 +171,15 @@ class __RWrapperState extends State<RWrap> {
 
   @override
   Widget build(BuildContext context) {
-    changeBreakpoints(context, breakpoints);
     detectDevice(context);
     return RDeviceAndThemeProvider(
-        child:  widget.child;
-          
-        
+        key: UniqueKey(),
+        child: Builder(
+          builder: (context) {
+            _context = context;
+            return widget.child;
+          },
+        ),
         theme: currentTheme,
         state: this,
         device: currentDevice);
@@ -181,7 +189,7 @@ class __RWrapperState extends State<RWrap> {
 class RDeviceAndThemeProvider extends InheritedWidget {
   final RDevice device;
   final __RWrapperState state;
-  final RTheme theme;
+  final _CurrentTheme theme;
   RDeviceAndThemeProvider(
       {Key key,
       @required Widget child,
@@ -242,10 +250,6 @@ class RAdapt {
             .contains(color),
         'Color "$color" is not an allowed Color in RConfiguration.allowedColors');
     return RWrap.of(context).theme.colors[color];
-  }
-
-  static void initialize(BuildContext context) {
-    _context=context;// now initialize is required
   }
 
   static Color getColor(String color) => getColorOfContext(_context, color);
