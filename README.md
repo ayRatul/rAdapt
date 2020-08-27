@@ -325,6 +325,10 @@ class  ExampleContainer  extends  StatelessWidget {
     }}
 And we are done !!
 
+## KNOWN ISSUES
+Generally, the library works out of the box, but you might notice that in some widgets the breakpoints don't trigger, they don't change size...
+So far, i've been only found that this happens in widgets with **"const"** , to attach this widgets to liste to device size changes (in mobile and web), you just have to attach them in the build method with the method "RAdapt.attach(context)"
+
 ## TODO
 - Better documentation
 - Optimize the code
