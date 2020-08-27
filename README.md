@@ -72,7 +72,7 @@ Since it doesn't provide any way of identifying itself, we need to use a class t
     
     }
 
-Now... we need to make a class that **Implements RConfiguration**, the library uses this to determine multiple things at once and avoid boilerplate in the build method.
+Now... we need to make a class that **Implements RConfiguration**, the library uses this to determine multiple things at once and avoid boilerplate in the builder method of .
 
     class  MyConfiguration  implements  RConfiguration {
     
@@ -131,7 +131,7 @@ Using extensions... the library would implement extensions but importing from a 
     
     }
   
-rAdapt stores the context of RWrap and uses it in the function "getNumber", flutter doesn't recommend to store context because the widget can be disposed... HOWEVER... since we call RWrap in the build method, that's unlikely to happen ;)
+rAdapt stores the context of RWrap and uses it in the function "getNumber", flutter doesn't recommend to store context because the widget can be disposed... HOWEVER... since we call RWrap in the builder method of materialApp, that's unlikely to happen ;)
 
 And after all that, enjoy rAdapt
 
