@@ -269,7 +269,7 @@ Now we need to organize our Themes, we will use a class for that , and introduce
 	class MyThemes {
 	static RThemeBuilder light = ()=>LightTheme();
 	static RThemeBuilder dark =()=>DarkTheme();
-	static  List\<RThemeBuilder> get  dataList => [light, dark];
+	static  List<RThemeBuilder> get  dataList => [light, dark];
 	}
 
 And we have come full circle, in MyConfiguration we just set the values
