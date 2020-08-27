@@ -1,10 +1,11 @@
-# rAdapt 💻➡️🖥➡️📱➡️⌚️
 
-# rAdapt: Easy scaling, and color Theming
+# rAdapt: An Aproach to colors.xml and values.xml for flutter
 
 rAdapt comes from the necessity of having more than 2 color themes in a Flutter app, of the desire to stop using "ThemeData.of(context)", and the desire of having a consistent scaling, and per device layouts.
 
-The main project from what this is forked is https://github.com/FilledStacks/responsive_builder , wich is awesome. But i have modified the code so much that it has evolved to a different library.
+The 2 main factors are color and size, rAdapt deals with them in a different way. We can call colors like **R.backgroundColor.c** , and sizes like **56.d** and they change depending on the device, and the current RTheme
+
+The main project from what this is forked is https://github.com/FilledStacks/responsive_builder , which is awesome. But i have modified the code so much that it has evolved to a different library.
 
 ## So... how does it work?
 
@@ -51,7 +52,7 @@ First create a values.dart file in the /lib folder of your flutter project. We a
     import  'package:rAdapt/rAdapt.dart';
     
     export  'package:rAdapt/rAdapt.dart';
-Now we need to define the  **RDevice** objects , it's an object that holds a maxSize value and a multiplier.
+Now we need to define the  **RDevice** objects , it's an object that holds a maxSize value and a multiplier. Kinda like braekpoints.
 
 > RDevice(maxSize,multiplier)
 
@@ -81,15 +82,15 @@ Now... we need to make a class that **Implements RConfiguration**, the library u
     
     @override
     
-    get  themes => null; //We are not using themes for now, all this is null
+    get  themes => null; //We are not using themes for now, this is null
     
     @override
     
-    get  allowedColors => null;
+    get  allowedColors => null; //We are not using themes for now, this is null
     
     @override
     
-    get  rootTheme => null;
+    get  rootTheme => null; //We are not using themes for now, this is null
     
     }
 
@@ -130,18 +131,7 @@ Using extensions... the library would implement extensions but importing from a 
     
     }
   
-after all that there is only 1 step, you must initialize rAdapt, this is easy as well
-
-## Initialize
-We need to initialize with access to the context, that means inside Build or initstate. 
-
-    @override
-
-    Widget  build(BuildContext context) {
-    
-	    RAdapt.initialize(context); //Call it once, it just updates the dependecies to listen for a size change ;)
-    ...
-    }
+rAdapt stores the context of RWrap and uses it in the function "getNumber", flutter doesn't recommend to store context because the widget can be disposed... HOWEVER... since we call RWrap in the build method, that's unlikely to happen ;)
 
 And after all that, enjoy rAdapt
 
@@ -150,7 +140,6 @@ And after all that, enjoy rAdapt
     @override
     
     Widget build(BuildContext context) {
-	    RAdapt.initialize(context);
 	    return Center(
 	    child:Container(
 		    color: Colors.red,
@@ -159,3 +148,184 @@ And after all that, enjoy rAdapt
 	    ));
     }}
 
+# Theme Setup
+
+For themes, it gets somewhat complicated. but once you set it up, using it is a breeze.
+
+First let's look at the current configuration
+
+    class  MyConfiguration  implements  RConfiguration {
+    
+    @override
+    
+    get  devices => RDevices.dataList;
+    
+    @override
+    
+    get  themes => null;
+    
+    @override
+    
+    get  allowedColors => null; 
+    
+    @override
+    
+    get  rootTheme => null; 
+    
+    }
+Let's start with "allowedColors", this is a List of Strings that represents all the colors that the theme will have. Why do we do this?.  To have consistency.
+How do we set it up ? With an enum... an enum???? . Yes, an enum. You will see why later. (Also, i would suggest using only one letter as the enum name) 
+
+    enum R{
+    background,
+    button,
+    foreground
+    }
+ We can see that we have 3 available colors. Now let's set up some themes.
+ rAdapt has the abstract class RTheme, each theme that you create should "implement RTheme"
+
+    class LightTheme implements RTheme{}
+    class DarkTheme implements RTheme{}
+If you copy/paste this in your values.dart file the IDE might tell you that you need to implement the values "colors", and "inheritsColors" , colors is a Map<String,Color> ,and inheritColors is something we will discuse later.
+
+So the classes should look like this 
+
+    class  LightTheme  implements  RTheme {
+    @override
+    Map<String, Color> get  colors => {};
+    
+    @override
+    bool  get  inheritsColors => true;
+    }
+    class  DarkTheme implements  RTheme {
+    @override
+    Map<String, Color> get  colors => {};
+    
+    @override
+    bool  get  inheritsColors => true;
+    }
+Now... let's do something with that enum of colors... let's use an extension again. Copy and paste this
+
+    extension  RColor  on  R {
+    
+    String  get  s => this.toString();
+    
+    Color  get  c => RAdapt.getColor(this.s);
+    
+    }
+
+Now we can fill up the Themes color property like this :
+
+    class  LightTheme  implements  RTheme {
+    
+    @override
+    
+    Map<String, Color> get  colors => {
+    
+    R.background.s:Color(0xFFFFFFFF), //We call R.background.s to convert the enum value to a string.
+    
+    R.button.s:Color(0xFFAAFFAA),
+    
+    R.foreground.s:Color(0xFF000000)
+    
+    };
+    
+      
+    
+    @override
+    
+    bool  get  inheritsColors => true; //We set this to true
+    
+    }
+    
+      
+    
+    class  DarkTheme  implements  RTheme {
+    
+    @override
+    
+    Map<String, Color> get  colors => {
+    
+    R.background.s:Color(0xFF000000),
+    
+    R.button.s:Color(0xFFFFFFAA),
+	
+	//Where is foreground color?? 7u7
+    
+    };
+    
+      
+    
+    @override
+    
+    bool  get  inheritsColors => true; //We set this to true
+    
+    }
+
+As you can see we don't implement foreground in DarkTheme... Why? . Because DarkTheme has inheritsColors set to TRUE, it will INHERIT all the colors of the rootTheme... which will be LightTheme
+
+Now we need to organize our Themes, we will use a class for that , and introduce a new object **RThemeBuilder** . Why do we use a builder? to avoid having resources wasted in themes that we are not using ;)
+
+class MyThemes {
+	static RThemeBuilder light = ()=>LightTheme();
+	static RThemeBuilder dark =()=>DarkTheme();
+	static  List\<RThemeBuilder> get  dataList => [light, dark];
+}
+
+And we have come full circle, in MyConfiguration we just set the values
+   
+
+     class  MyConfiguration  implements  RConfiguration {
+    
+    @override
+    
+    get  devices => RDevices.dataList;
+    
+    @override
+    
+    get  themes => MyThemes.dataList;
+    
+    @override
+    
+    get  allowedColors => RAdapt.valuesToString(R.values); //This is important to convert the enum to a list of string ;) 
+    
+    @override
+    
+    get  rootTheme => RThemes.light; 
+    
+    }
+
+Now... we can enjoy using the themes!
+
+    class  ExampleContainer  extends  StatelessWidget {
+        
+    @override
+    
+    Widget build(BuildContext context) {
+	    return Center(
+	    child:Container(
+		    color: R.button.c, //THISS!!
+			width: 50.d, 
+		    height: 50.d, 
+	    ));
+    }}
+
+to change Themes we can just call **RAdapt.changeTheme(context, type); ** , where context is a normal buildcontext , and type, is the type of the theme, so it can be "LightTheme" and "DarkTheme", notice we don't use the parentheses, we use only the type
+
+class  ExampleContainer  extends  StatelessWidget {
+        
+    @override
+    
+    Widget build(BuildContext context) {
+	    return Center(
+	    InkWell(
+		    child: Container(width:20.d,height:20.d,color:R.background.c), //THISS!!
+			onTap:(){RAdapt.changeTheme(context,DarkTheme);}
+	    ));
+    }}
+And we are done !!
+
+## TODO
+- Better documentation
+- Optimize the code
+- Maybe upload it to pub.dev
