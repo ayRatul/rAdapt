@@ -1,5 +1,6 @@
 library radapt;
 
+import 'dart:ui';
 import 'package:flutter/material.dart';
 
 BuildContext _context;
@@ -35,27 +36,24 @@ class RWrap extends StatefulWidget {
   final Widget child;
   final RConfiguration configuration;
   final String initialTheme;
-  static RDeviceAndThemeProvider of(BuildContext context) {
-    assert(
-        context != null, "The context of RWrapper.of(context) can't be null");
-    return context
-        .dependOnInheritedWidgetOfExactType<RDeviceAndThemeProvider>();
-  }
+  static RDeviceAndThemeProvider of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<RDeviceAndThemeProvider>();
 
   @override
   __RWrapperState createState() => __RWrapperState();
 }
 
-class __RWrapperState extends State<RWrap> {
-  List<RDeviceWithLimits> breakpoints;
+class __RWrapperState extends State<RWrap> with WidgetsBindingObserver {
+  List<_RDevice> breakpoints;
   Map<String, RThemeBuilder> themes = {};
-  RDeviceWithLimits currentDevice = RDeviceWithLimits(0, 100, 1);
+  _RDevice currentDevice = _RDevice(0, 100, 1);
   _CurrentTheme currentTheme;
   @override
   void initState() {
     _loadThemes();
-    _loadBreakpoints(widget.configuration.devices);
+    loadBreakpoints(widget.configuration.devices, shouldUpdate: false);
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
   }
 
   bool get hasThemes =>
@@ -65,7 +63,7 @@ class __RWrapperState extends State<RWrap> {
 
   void _loadThemes() {
     RConfiguration conf = widget.configuration;
-    //We load the Themes if needed
+    //We only load the Themes if needed
     if (!hasThemes) return;
     assert(conf.rootTheme != null,
         'RConfiguration: RConfiguration.rootTheme should not be null');
@@ -80,7 +78,6 @@ class __RWrapperState extends State<RWrap> {
       assert(_defaultTheme.colors.containsKey(element),
           "RConfiguration.rootTheme: The default RTheme ${_defaultTheme.runtimeType.toString()} doesn't containt the color :$element , the Default Theme sould have EVERY color specified in RConfiguration.allowedColors");
     });
-
     //We clear the previous themes (if any), to load conf.themes, convert it to a Map of <String,RThemeBuilder>, for easy access ;)
     themes.clear();
     conf.themes.forEach((_themeBuilder) {
@@ -101,7 +98,6 @@ class __RWrapperState extends State<RWrap> {
     if (widget.initialTheme != null) {
       assert(themes.containsKey(widget.initialTheme),
           'RWrapper:The initialTheme ${widget.initialTheme} does not match any of the names specified in RConfiguration.themes');
-
       currentTheme = _buildTheme(themes[widget.initialTheme]);
     } else {
       currentTheme = _defaultTheme;
@@ -110,11 +106,9 @@ class __RWrapperState extends State<RWrap> {
 
   _CurrentTheme _buildTheme(RThemeBuilder builder) {
     RTheme _theme = builder();
-    if (_theme.inheritsColors) {
-      RTheme _defaultTheme = widget.configuration.rootTheme();
-      Map<String, Color> _t = {..._defaultTheme.colors, ..._theme.colors};
-      return _CurrentTheme(_theme.runtimeType, _t);
-    }
+    if (_theme.inheritsColors)
+      return _CurrentTheme(_theme.runtimeType,
+          {...widget.configuration.rootTheme().colors, ..._theme.colors});
     return _CurrentTheme(_theme.runtimeType, _theme.colors);
   }
 
@@ -123,74 +117,83 @@ class __RWrapperState extends State<RWrap> {
         "RController.changeTheme was called, even tought you didn't specify the required parameters in RConfiguration || RWrapper");
     assert(themes.containsKey(name.toString()),
         'RController.changeTheme: The name ${name.toString()} does not match any of the names specified in RConfiguration.themes');
-    _CurrentTheme _theme = _buildTheme(themes[name.toString()]);
-    setState(() {
-      currentTheme = _theme;
-    });
+    currentTheme = _buildTheme(themes[name.toString()]);
+    setState(() {});
   }
 
-  void _loadBreakpoints(List<RDevice> newBreakpoints) {
-    List<RDevice> _breakpoints = newBreakpoints?.toList();
-    _breakpoints?.sort((a, b) => a.maxSize.compareTo(b.maxSize));
-    RDevice previousBreakpoint = _breakpoints[0];
-    List<RDeviceWithLimits> _orderedBreakpoints = [];
+  void loadBreakpoints(List<RDevice> newBreakpoints, {shouldUpdate = true}) {
+    if (newBreakpoints == null || newBreakpoints.length == 0) return;
+    List<RDevice> _breakpoints = newBreakpoints.toList()
+      ..sort((a, b) => a.maxSize.compareTo(b.maxSize));
+    RDevice _prevBreakpoint = _breakpoints[0];
+    List<_RDevice> _orderedBreakpoints = [];
     _breakpoints.forEach((element) {
-      _orderedBreakpoints.add(RDeviceWithLimits(
-          previousBreakpoint.maxSize != element.maxSize
-              ? previousBreakpoint.maxSize
+      _orderedBreakpoints.add(_RDevice(
+          _prevBreakpoint.maxSize != element.maxSize
+              ? _prevBreakpoint.maxSize
               : 0,
           element.maxSize,
           element.multiplier));
-
-      previousBreakpoint = element;
+      _prevBreakpoint = element;
     });
     breakpoints = _orderedBreakpoints;
+    detectDevice(shouldUpdate: shouldUpdate);
   }
 
-  void changeBreakpoints(BuildContext context, List<RDevice> breakpoints) {
-    _loadBreakpoints(breakpoints);
-    detectDevice(context);
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
-  void detectDevice(BuildContext context) {
+  void detectDevice({bool shouldUpdate = true}) {
     if (breakpoints == null) return;
-    double size = MediaQuery.of(context).size.shortestSide;
+    double size = window.physicalSize.shortestSide;
     if (size > currentDevice.minSize && size < currentDevice.maxSize) return;
-    RDevice _dev = breakpoints.last;
+    _RDevice _dev = breakpoints.last;
     for (var _t = 0; _t < breakpoints.length; _t++) {
-      RDevice _currentDevice = breakpoints[_t];
+      _RDevice _currentDevice = breakpoints[_t];
       if (size < _currentDevice.maxSize) {
         _dev = _currentDevice;
         break;
       }
     }
-    setState(() {
-      currentDevice = _dev;
-    });
+    currentDevice = _dev;
+    if (shouldUpdate) setState(() {});
+  }
+
+  @override
+  void didChangeMetrics() {
+    detectDevice();
+    super.didChangeMetrics();
   }
 
   @override
   Widget build(BuildContext context) {
-    detectDevice(context);
     return RDeviceAndThemeProvider(
         key: UniqueKey(),
-        child: Builder(
-          builder: (context) {
-            _context = context;
-            return widget.child;
-          },
-        ),
+        child: _Notifier(widget.child),
         theme: currentTheme,
         state: this,
         device: currentDevice);
   }
 }
 
+class _Notifier extends StatelessWidget {
+  const _Notifier(this.child, {Key key}) : super(key: key);
+  final Widget child;
+  @override
+  Widget build(BuildContext context) {
+    _context = context;
+    return child;
+  }
+}
+
 class RDeviceAndThemeProvider extends InheritedWidget {
-  final RDevice device;
+  final _RDevice device;
   final __RWrapperState state;
   final _CurrentTheme theme;
-  RDeviceAndThemeProvider(
+  const RDeviceAndThemeProvider(
       {Key key,
       @required Widget child,
       @required this.state,
@@ -203,38 +206,32 @@ class RDeviceAndThemeProvider extends InheritedWidget {
       oldWidget.theme != theme || oldWidget.device != device;
 }
 
-//The maxSize is the.. max size. The min size, depends if there is smaller breakpoints, if not, it's 0
-
 class RDevice {
   const RDevice(this.maxSize, this.multiplier);
   final double multiplier;
   final int maxSize;
 }
 
-class RDeviceWithLimits implements RDevice {
-  RDeviceWithLimits(this.minSize, this.maxSize, this.multiplier);
+class _RDevice {
+  _RDevice(this.minSize, this.maxSize, this.multiplier);
   final double multiplier;
   final int maxSize;
   final int minSize;
 }
-
-/// Provides a builder function for a landscape and portrait widget
 
 class OrientationLayoutBuilder extends StatelessWidget {
   final WidgetBuilder landscape;
   final WidgetBuilder portrait;
   const OrientationLayoutBuilder({
     Key key,
-    this.landscape,
-    this.portrait,
+    @required this.landscape,
+    @required this.portrait,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    var orientation = MediaQuery.of(context).orientation;
-    if (orientation == Orientation.landscape && landscape != null) {
-      return landscape(context);
-    }
+    if (MediaQuery.of(context).orientation == Orientation.landscape &&
+        landscape != null) return landscape(context);
     return portrait(context);
   }
 }
@@ -252,7 +249,7 @@ class RAdapt {
     return RWrap.of(context).theme.colors[color];
   }
 
-  static void attach(BuildContext context) => _context = context;
+  static void attach(BuildContext context) => RWrap.of(context);
 
   static Color getColor(String color) => getColorOfContext(_context, color);
 
@@ -267,7 +264,7 @@ class RAdapt {
 
   static void changeBreakpoints(
           BuildContext context, List<RDevice> breakpoints) =>
-      RWrap.of(context).state.changeBreakpoints(context, breakpoints);
+      RWrap.of(context).state.loadBreakpoints(breakpoints, shouldUpdate: true);
 
   static List<String> valuesToString(List<dynamic> values) {
     return values.map((e) => e.toString()).toList();
