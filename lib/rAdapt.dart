@@ -148,12 +148,12 @@ class __RWrapperState extends State<RWrap> with WidgetsBindingObserver {
 
   void detectDevice({bool shouldUpdate = true}) {
     if (breakpoints == null) return;
-    double size = window.physicalSize.shortestSide;
+    double size = window.physicalSize.shortestSide / window.devicePixelRatio;
     if (size > currentDevice.minSize && size < currentDevice.maxSize) return;
     _RDevice _dev = breakpoints.last;
     for (var _t = 0; _t < breakpoints.length; _t++) {
       _RDevice _currentDevice = breakpoints[_t];
-      if (size < _currentDevice.maxSize) {
+      if (size > _currentDevice.minSize && size < _currentDevice.maxSize) {
         _dev = _currentDevice;
         break;
       }
