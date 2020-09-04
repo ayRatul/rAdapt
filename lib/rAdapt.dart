@@ -27,7 +27,7 @@ class _CurrentTheme {
 }
 
 class RWrap extends StatefulWidget {
-  RWrap(
+  const RWrap(
       {Key key,
       @required this.child,
       @required this.configuration,
@@ -171,7 +171,6 @@ class __RWrapperState extends State<RWrap> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return RDeviceAndThemeProvider(
-        key: UniqueKey(),
         child: _Notifier(widget.child),
         theme: currentTheme,
         state: this,
